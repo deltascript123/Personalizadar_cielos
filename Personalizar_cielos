@@ -1,0 +1,445 @@
+local Lighting = game:GetService("Lighting")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local currentAtmosphere = nil
+local currentColorCorrection = nil
+local currentSunRays = nil
+local savedClockTime = nil
+local savedBrightness = nil
+local mySky = nil
+
+local skyboxes = {
+    {name = "N3xul Sky", Bk = "159454299", Dn = "159454296", Ft = "159454293", Lf = "159454286", Rt = "159454300", Up = "159454288"},
+    {name = "Classic Roblox", Bk = "15436783", Dn = "15436796", Ft = "15436831", Lf = "15437157", Rt = "15437166", Up = "15437184"},
+    {name = "Tropic", Bk = "169210090", Dn = "169210108", Ft = "169210121", Lf = "169210133", Rt = "169210143", Up = "169210149"},
+    {name = "Sunset", Bk = "323494035", Dn = "323494368", Ft = "323494130", Lf = "323494252", Rt = "323494067", Up = "323493360"},
+    {name = "Anime Island Sky", Bk = "14753804949", Dn = "14753795573", Ft = "14753807625", Lf = "14753797417", Rt = "14753799966", Up = "14753810287"},
+    {name = "Blue And Purple Sky", Bk = "6021017254", Dn = "6021016390", Ft = "6021015479", Lf = "6021014807", Rt = "6021012347", Up = "6021011228"},
+    {name = "Blue Aurora Mountains", Bk = "126146408999925", Dn = "118112392224589", Ft = "121253817183621", Lf = "134105463289425", Rt = "89099449712918", Up = "138429250948648"},
+    {name = "Blue Night Sky", Bk = "1233158420", Dn = "1233158838", Ft = "1233157105", Lf = "1233157640", Rt = "1233157995", Up = "1233159158"},
+    {name = "Cloudy Winter Sky", Bk = "7307273436", Dn = "7307275898", Ft = "7307282434", Lf = "7307284944", Rt = "7307287254", Up = "7307290025"},
+    {name = "Desert Hills Sky", Bk = "174070373", Dn = "174070680", Ft = "174071389", Lf = "174071449", Rt = "174071494", Up = "174071511"},
+    {name = "Green Aurora Mountains", Bk = "1189339378", Dn = "1189340601", Ft = "1189339741", Lf = "1189339550", Rt = "1189339155", Up = "1189340203"},
+    {name = "Stormy Sky", Bk = "18703245834", Dn = "18703243349", Ft = "18703240532", Lf = "18703237556", Rt = "18703235430", Up = "18703232671"},
+    {name = "Underwater Sky", Bk = "228249540", Dn = "228249607", Ft = "228249641", Lf = "228249699", Rt = "228249810", Up = "228249872"},
+    {name = "Yellow Desert Dusk", Bk = "246894245", Dn = "246893155", Ft = "246894274", Lf = "246894229", Rt = "246892987", Up = "246894296"},
+    {name = "Cartoon Sky", Bk = "5333954202", Dn = "5333944933", Ft = "5333954202", Lf = "5333954202", Rt = "5333954202", Up = "5333943668"},
+    {name = "Dark Halloween Sky", Bk = "10735998453", Dn = "10735997670", Ft = "10735998943", Lf = "10735998682", Rt = "10735998205", Up = "10735997280"},
+    {name = "Black Sky", Bk = "2013298", Dn = "2013298", Ft = "2013298", Lf = "2013298", Rt = "2013298", Up = "2013298"},
+    {name = "Minecraft", Bk = "1876545003", Dn = "1876544331", Ft = "1876542941", Lf = "1876543392", Rt = "1876543764", Up = "1876544642"},
+    {name = "Planeta", Bk = "218955819", Dn = "218953419", Ft = "218954524", Lf = "218958493", Rt = "218957134", Up = "218950090"},
+    {name = "Galaxia", Bk = "159454299", Dn = "159454299", Ft = "159454299", Lf = "159454299", Rt = "159454299", Up = "159454299"}
+}
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "SkyChanger"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 40, 0, 40)
+toggleBtn.Position = UDim2.new(0, 15, 0.5, -20)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.Text = "B"
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 20
+toggleBtn.Parent = gui
+
+local tCorner = Instance.new("UICorner")
+tCorner.CornerRadius = UDim.new(1, 0)
+tCorner.Parent = toggleBtn
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 260)
+frame.Position = UDim2.new(0.5, -100, 0.5, -130)
+frame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Visible = false
+frame.Parent = gui
+
+local fCorner = Instance.new("UICorner")
+fCorner.CornerRadius = UDim.new(0, 8)
+fCorner.Parent = frame
+
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 24)
+topBar.BackgroundColor3 = Color3.fromRGB(30, 30, 36)
+topBar.BorderSizePixel = 0
+topBar.Active = true
+topBar.Parent = frame
+
+local tbCorner = Instance.new("UICorner")
+tbCorner.CornerRadius = UDim.new(0, 8)
+tbCorner.Parent = topBar
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -40, 1, 0)
+titleLabel.Position = UDim2.new(0, 8, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.TextColor3 = Color3.fromRGB(190, 230, 255)
+titleLabel.Text = "☁️ brax-XD"
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 12
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = topBar
+
+local titleStroke = Instance.new("UIStroke")
+titleStroke.Color = Color3.fromRGB(140, 200, 255)
+titleStroke.Thickness = 1
+titleStroke.Transparency = 0.35
+titleStroke.Parent = titleLabel
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 16, 0, 16)
+closeBtn.Position = UDim2.new(1, -20, 0, 4)
+closeBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Text = "×"
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 12
+closeBtn.Parent = topBar
+
+local cCorner = Instance.new("UICorner")
+cCorner.CornerRadius = UDim.new(1, 0)
+cCorner.Parent = closeBtn
+
+local skyBox = Instance.new("TextBox")
+skyBox.Size = UDim2.new(1, -20, 0, 24)
+skyBox.Position = UDim2.new(0, 10, 0, 30)
+skyBox.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+skyBox.TextColor3 = Color3.fromRGB(240, 240, 245)
+skyBox.PlaceholderText = "ID de skybox"
+skyBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 130)
+skyBox.Text = ""
+skyBox.ClearTextOnFocus = false
+skyBox.Font = Enum.Font.Gotham
+skyBox.TextSize = 10
+skyBox.Parent = frame
+
+local sbCorner = Instance.new("UICorner")
+sbCorner.CornerRadius = UDim.new(0, 4)
+sbCorner.Parent = skyBox
+
+local applyBtn = Instance.new("TextButton")
+applyBtn.Size = UDim2.new(1, -20, 0, 24)
+applyBtn.Position = UDim2.new(0, 10, 0, 58)
+applyBtn.BackgroundColor3 = Color3.fromRGB(60, 110, 230)
+applyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+applyBtn.Text = "Aplicar cielo"
+applyBtn.Font = Enum.Font.GothamBold
+applyBtn.TextSize = 10
+applyBtn.Parent = frame
+
+local aCorner = Instance.new("UICorner")
+aCorner.CornerRadius = UDim.new(0, 4)
+aCorner.Parent = applyBtn
+
+local resetBtn = Instance.new("TextButton")
+resetBtn.Size = UDim2.new(1, -20, 0, 22)
+resetBtn.Position = UDim2.new(0, 10, 0, 86)
+resetBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+resetBtn.TextColor3 = Color3.fromRGB(220, 220, 225)
+resetBtn.Text = "Restaurar"
+resetBtn.Font = Enum.Font.Gotham
+resetBtn.TextSize = 10
+resetBtn.Parent = frame
+
+local rCorner = Instance.new("UICorner")
+rCorner.CornerRadius = UDim.new(0, 4)
+rCorner.Parent = resetBtn
+
+local graphicsLabel = Instance.new("TextLabel")
+graphicsLabel.Size = UDim2.new(1, -20, 0, 14)
+graphicsLabel.Position = UDim2.new(0, 10, 0, 112)
+graphicsLabel.BackgroundTransparency = 1
+graphicsLabel.TextColor3 = Color3.fromRGB(160, 160, 175)
+graphicsLabel.Text = "SHADER"
+graphicsLabel.Font = Enum.Font.GothamBold
+graphicsLabel.TextSize = 9
+graphicsLabel.TextXAlignment = Enum.TextXAlignment.Left
+graphicsLabel.Parent = frame
+
+local function makeGraphicBtn(name, yPos, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -20, 0, 22)
+    btn.Position = UDim2.new(0, 10, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    btn.TextColor3 = Color3.fromRGB(230, 230, 235)
+    btn.Text = name
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 10
+    btn.Parent = frame
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = btn
+
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+local function saveTime()
+    if savedClockTime == nil then
+        savedClockTime = Lighting.ClockTime
+        savedBrightness = Lighting.Brightness
+    end
+end
+
+local function clearShaders()
+    if currentAtmosphere then currentAtmosphere:Destroy() currentAtmosphere = nil end
+    if currentColorCorrection then currentColorCorrection:Destroy() currentColorCorrection = nil end
+    if currentSunRays then currentSunRays:Destroy() currentSunRays = nil end
+end
+
+local function restoreTime()
+    if savedClockTime ~= nil then
+        Lighting.ClockTime = savedClockTime
+        Lighting.Brightness = savedBrightness
+        savedClockTime = nil
+        savedBrightness = nil
+    end
+end
+
+local function applyShader(hour, brightness, tintColor, atmoColor, atmoDecay, atmoDensity, atmoHaze, atmoGlare, saturation, contrast, sunRaysIntensity, keepSky)
+    saveTime()
+    clearShaders()
+
+    if not keepSky then
+        Lighting.ClockTime = hour
+        Lighting.Brightness = brightness
+    end
+
+    if atmoColor then
+        local atmo = Instance.new("Atmosphere")
+        atmo.Density = atmoDensity
+        atmo.Offset = 0.25
+        atmo.Color = atmoColor
+        atmo.Decay = atmoDecay
+        atmo.Glare = atmoGlare
+        atmo.Haze = atmoHaze
+        atmo.Parent = Lighting
+        currentAtmosphere = atmo
+    end
+
+    local cc = Instance.new("ColorCorrectionEffect")
+    cc.Brightness = 0.02
+    cc.Contrast = contrast
+    cc.Saturation = saturation
+    cc.TintColor = tintColor
+    cc.Parent = Lighting
+    currentColorCorrection = cc
+
+    if sunRaysIntensity > 0 then
+        local sr = Instance.new("SunRaysEffect")
+        sr.Intensity = sunRaysIntensity
+        sr.Spread = 1
+        sr.Parent = Lighting
+        currentSunRays = sr
+    end
+end
+
+makeGraphicBtn("Daytime", 128, function()
+    applyShader(14, 3, Color3.fromRGB(255, 255, 255), nil, nil, nil, nil, nil, 0, 0, 0, false)
+    if currentColorCorrection then currentColorCorrection:Destroy() currentColorCorrection = nil end
+end)
+
+makeGraphicBtn("Sunset", 152, function()
+    applyShader(17.5, 2, Color3.fromRGB(255, 210, 175), Color3.fromRGB(255, 190, 145), Color3.fromRGB(190, 120, 80), 0.25, 1, 0.2, 0.2, 0.12, 0.1, true)
+end)
+
+makeGraphicBtn("Night", 176, function()
+    applyShader(0, 2, Color3.fromRGB(200, 210, 255), nil, nil, nil, nil, nil, -0.1, 0.05, 0, true)
+end)
+
+makeGraphicBtn("Sin shader", 200, function()
+    clearShaders()
+    restoreTime()
+end)
+
+local function getSky()
+    if mySky and mySky.Parent then
+        return mySky
+    end
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if obj:IsA("Sky") and obj.Name == "MyCustomSky" then
+            mySky = obj
+            return obj
+        end
+    end
+    local sky = Instance.new("Sky")
+    sky.Name = "MyCustomSky"
+    sky.SunAngularSize = 21
+    sky.MoonAngularSize = 11
+    sky.StarCount = 3000
+    sky.CelestialBodiesShown = true
+    sky.Parent = Lighting
+    mySky = sky
+    return sky
+end
+
+local function applySkyById(id)
+    id = tostring(id):gsub("%s", ""):gsub("rbxassetid://", "")
+    if id == "" then return end
+    local asset = "rbxassetid://" .. id
+    local sky = getSky()
+    sky.SkyboxBk = asset
+    sky.SkyboxDn = asset
+    sky.SkyboxFt = asset
+    sky.SkyboxLf = asset
+    sky.SkyboxRt = asset
+    sky.SkyboxUp = asset
+    Lighting.FogEnd = 100000
+    Lighting.FogStart = 0
+    Lighting.OutdoorAmbient = Color3.fromRGB(180, 180, 180)
+    Lighting.Ambient = Color3.fromRGB(120, 120, 120)
+end
+
+local function applyCubemap(entry)
+    local sky = getSky()
+    sky.SkyboxBk = "rbxassetid://" .. entry.Bk
+    sky.SkyboxDn = "rbxassetid://" .. entry.Dn
+    sky.SkyboxFt = "rbxassetid://" .. entry.Ft
+    sky.SkyboxLf = "rbxassetid://" .. entry.Lf
+    sky.SkyboxRt = "rbxassetid://" .. entry.Rt
+    sky.SkyboxUp = "rbxassetid://" .. entry.Up
+    Lighting.FogEnd = 100000
+    Lighting.FogStart = 0
+    Lighting.OutdoorAmbient = Color3.fromRGB(180, 180, 180)
+    Lighting.Ambient = Color3.fromRGB(120, 120, 120)
+end
+
+local function resetSky()
+    if mySky then
+        mySky:Destroy()
+        mySky = nil
+    end
+end
+
+local cubeToggleBtn = Instance.new("TextButton")
+cubeToggleBtn.Size = UDim2.new(1, -20, 0, 22)
+cubeToggleBtn.Position = UDim2.new(0, 10, 0, 224)
+cubeToggleBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+cubeToggleBtn.TextColor3 = Color3.fromRGB(240, 240, 245)
+cubeToggleBtn.Text = "Cubemaps ▼"
+cubeToggleBtn.Font = Enum.Font.Gotham
+cubeToggleBtn.TextSize = 10
+cubeToggleBtn.Parent = frame
+
+local ctCorner = Instance.new("UICorner")
+ctCorner.CornerRadius = UDim.new(0, 4)
+ctCorner.Parent = cubeToggleBtn
+
+local cubeFrame = Instance.new("ScrollingFrame")
+cubeFrame.Size = UDim2.new(1, -20, 0, 130)
+cubeFrame.Position = UDim2.new(0, 10, 0, 250)
+cubeFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+cubeFrame.BorderSizePixel = 0
+cubeFrame.ScrollBarThickness = 3
+cubeFrame.CanvasSize = UDim2.new(0, 0, 0, #skyboxes * 24)
+cubeFrame.Visible = false
+cubeFrame.Parent = frame
+
+local cfCorner = Instance.new("UICorner")
+cfCorner.CornerRadius = UDim.new(0, 4)
+cfCorner.Parent = cubeFrame
+
+local cubeLayout = Instance.new("UIListLayout")
+cubeLayout.Padding = UDim.new(0, 2)
+cubeLayout.SortOrder = Enum.SortOrder.LayoutOrder
+cubeLayout.Parent = cubeFrame
+
+local cubePadding = Instance.new("UIPadding")
+cubePadding.PaddingTop = UDim.new(0, 3)
+cubePadding.PaddingLeft = UDim.new(0, 3)
+cubePadding.PaddingRight = UDim.new(0, 3)
+cubePadding.Parent = cubeFrame
+
+for i, entry in ipairs(skyboxes) do
+    local option = Instance.new("TextButton")
+    option.Size = UDim2.new(1, -6, 0, 22)
+    option.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+    option.TextColor3 = Color3.fromRGB(230, 230, 235)
+    option.Text = entry.name
+    option.Font = Enum.Font.Gotham
+    option.TextSize = 10
+    option.LayoutOrder = i
+    option.Parent = cubeFrame
+
+    local oCorner = Instance.new("UICorner")
+    oCorner.CornerRadius = UDim.new(0, 4)
+    oCorner.Parent = option
+
+    option.MouseButton1Click:Connect(function()
+        applyCubemap(entry)
+    end)
+end
+
+cubeToggleBtn.MouseButton1Click:Connect(function()
+    if cubeFrame.Visible then
+        cubeFrame.Visible = false
+        cubeToggleBtn.Text = "Cubemaps ▼"
+        frame.Size = UDim2.new(0, 200, 0, 260)
+    else
+        cubeFrame.Visible = true
+        cubeToggleBtn.Text = "Cubemaps ▲"
+        frame.Size = UDim2.new(0, 200, 0, 390)
+    end
+end)
+
+applyBtn.MouseButton1Click:Connect(function()
+    applySkyById(skyBox.Text)
+end)
+
+resetBtn.MouseButton1Click:Connect(function()
+    resetSky()
+    clearShaders()
+    restoreTime()
+    skyBox.Text = ""
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+    toggleBtn.Visible = true
+end)
+
+toggleBtn.MouseButton1Click:Connect(function()
+    frame.Visible = true
+    toggleBtn.Visible = false
+end)
+
+local dragging = false
+local dragStart, startPos
+
+topBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+    or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
